@@ -667,6 +667,21 @@ export class BrowserConnector {
       });
     }
   }
+
+  public shutdown(): void {
+    console.log("Shutting down BrowserConnector...");
+
+    if (this.activeConnection) {
+      console.log("Closing active WebSocket connection...");
+      this.activeConnection.terminate();
+      this.activeConnection = null;
+    }
+
+    if (this.wss) {
+      console.log("Closing WebSocket server...");
+      this.wss.close();
+    }
+  }
 }
 
 // Move the server creation before BrowserConnector instantiation
@@ -679,8 +694,17 @@ const browserConnector = new BrowserConnector(app, server);
 
 // Handle shutdown gracefully
 process.on("SIGINT", () => {
+  console.log("Shutting down Browser Connector server...");
+
+  browserConnector.shutdown();
+
   server.close(() => {
-    console.log("Server shut down");
+    console.log("Browser Connector server closed");
     process.exit(0);
   });
+
+  setTimeout(() => {
+    console.log("Forcing exit after timeout");
+    process.exit(1);
+  }, 3000);
 });
